@@ -9,8 +9,8 @@ import {
 
 const PrivacyPolicy = lazy(() => import('./pages/PrivacyPolicy'));
 
-// Local asset for instant loading (no network delay)
-const LOGO_URL = '/image.png';
+// Remote logo from GitHub
+const LOGO_URL = 'https://raw.githubusercontent.com/zavrinfo-arch/zavr-privacy-policy/main/zavr_logo.png';
 
 // ─── Splash Screen ────────────────────────────────────────────────────────────
 const SplashScreen = ({ onDone }: { onDone: () => void }) => {
