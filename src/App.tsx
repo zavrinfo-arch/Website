@@ -1,5 +1,5 @@
 import './App.css';
-import { useState, useEffect, useRef, lazy, Suspense } from 'react';
+import { useState, useEffect, useRef, lazy, Suspense, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   Target, Users, TrendingUp, Award, Bell, Smartphone,
@@ -9,80 +9,91 @@ import {
 
 const PrivacyPolicy = lazy(() => import('./pages/PrivacyPolicy'));
 
-// Remote logo from GitHub
 const LOGO_URL = 'https://raw.githubusercontent.com/zavrinfo-arch/zavr-privacy-policy/main/zavr_logo.png';
+
+// GPU-friendly animation variants
+const fadeUp = {
+  initial: { opacity: 0, y: 20 },
+  animate: { opacity: 1, y: 0 },
+};
+const fadeIn = {
+  initial: { opacity: 0 },
+  animate: { opacity: 1 },
+};
+const stagger = {
+  animate: { transition: { staggerChildren: 0.06 } },
+};
 
 // ─── Splash Screen ────────────────────────────────────────────────────────────
 const SplashScreen = ({ onDone }: { onDone: () => void }) => {
+  const timer = useRef<ReturnType<typeof setTimeout>>();
+
   useEffect(() => {
-    const t = setTimeout(onDone, 1400);
-    return () => clearTimeout(t);
+    timer.current = setTimeout(onDone, 1200);
+    return () => { if (timer.current) clearTimeout(timer.current); };
   }, [onDone]);
 
   return (
     <motion.div
       exit={{ opacity: 0 }}
-      transition={{ duration: 0.3 }}
-      className="fixed inset-0 z-[100] flex flex-col items-center justify-center bg-[#050a14] overflow-hidden"
+      transition={{ duration: 0.25 }}
+      className="fixed inset-0 z-[100] flex flex-col items-center justify-center bg-[#050a14] overflow-hidden will-change-[opacity]"
     >
-      {/* Reduced particle count for faster render */}
-      <div className="absolute inset-0 pointer-events-none">
-        {[...Array(10)].map((_, i) => (
-          <motion.div
+      {/* Minimal particles — CSS only, no JS animation */}
+      <div className="absolute inset-0 pointer-events-none" aria-hidden="true">
+        {[...Array(6)].map((_, i) => (
+          <div
             key={i}
-            className="absolute rounded-full"
+            className="absolute rounded-full animate-float"
             style={{
-              left: `${10 + i * 8}%`,
-              top: `${15 + (i * 9) % 70}%`,
+              left: `${15 + i * 14}%`,
+              top: `${20 + (i * 11) % 60}%`,
               width: 4 + (i % 3) * 2,
               height: 4 + (i % 3) * 2,
               background: i % 3 === 0 ? '#FF6B6B' : i % 3 === 1 ? '#4ECDC4' : '#FFD93D',
               opacity: 0.2,
+              animationDelay: `${i * 0.3}s`,
+              animationDuration: `${2 + i % 2}s`,
             }}
-            animate={{ y: [0, -16, 0] }}
-            transition={{ duration: 1.5 + (i % 3) * 0.5, repeat: Infinity, delay: i * 0.08 }}
           />
         ))}
       </div>
 
       {/* Logo */}
       <motion.div
-        initial={{ scale: 0, opacity: 0 }}
+        initial={{ scale: 0.8, opacity: 0 }}
         animate={{ scale: 1, opacity: 1 }}
-        transition={{ type: 'spring', stiffness: 200, damping: 20 }}
+        transition={{ duration: 0.4, ease: 'easeOut' }}
         className="relative z-10"
       >
         <div
-          className="w-28 h-28 rounded-3xl p-[3px] shadow-2xl"
+          className="w-24 h-24 rounded-2xl p-[3px]"
           style={{ background: 'linear-gradient(135deg, #FF6B6B, #4ECDC4, #FFD93D)' }}
         >
-          <div className="w-full h-full rounded-3xl bg-[#080e1d] flex items-center justify-center p-3">
-            <img src={LOGO_URL} alt="Zavr" className="w-full h-full object-contain" />
+          <div className="w-full h-full rounded-2xl bg-[#080e1d] flex items-center justify-center p-3">
+            <img src={LOGO_URL} alt="Zavr" className="w-full h-full object-contain" loading="eager" />
           </div>
         </div>
       </motion.div>
 
       <motion.div
-        initial={{ opacity: 0, y: 12 }}
+        initial={{ opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.25, duration: 0.3 }}
-        className="relative z-10 mt-6 text-center"
+        transition={{ delay: 0.2, duration: 0.25 }}
+        className="relative z-10 mt-5 text-center"
       >
-        <p
-          className="text-2xl font-light text-white tracking-wide"
-          style={{ fontFamily: 'Cormorant Garamond, serif' }}
-        >
+        <p className="text-xl font-light text-white tracking-wide" style={{ fontFamily: 'Cormorant Garamond, serif' }}>
           Zavr
         </p>
-        <p className="text-white/40 text-xs tracking-[0.2em] uppercase mt-1.5">Save Smarter, Together</p>
+        <p className="text-white/40 text-[10px] tracking-[0.2em] uppercase mt-1">Save Smarter, Together</p>
       </motion.div>
 
       {/* Loading bar */}
       <motion.div
         initial={{ scaleX: 0 }}
         animate={{ scaleX: 1 }}
-        transition={{ duration: 1.1, ease: 'easeOut' }}
-        className="absolute bottom-10 h-0.5 w-28 rounded-full origin-left"
+        transition={{ duration: 0.9, ease: 'easeOut' }}
+        className="absolute bottom-10 h-0.5 w-24 rounded-full origin-left"
         style={{ background: 'linear-gradient(90deg, #FF6B6B, #4ECDC4, #FFD93D)' }}
       />
     </motion.div>
@@ -95,7 +106,16 @@ const Navbar = () => {
   const [scrolled, setScrolled] = useState(false);
 
   useEffect(() => {
-    const fn = () => setScrolled(window.scrollY > 40);
+    let ticking = false;
+    const fn = () => {
+      if (!ticking) {
+        requestAnimationFrame(() => {
+          setScrolled(window.scrollY > 40);
+          ticking = false;
+        });
+        ticking = true;
+      }
+    };
     window.addEventListener('scroll', fn, { passive: true });
     return () => window.removeEventListener('scroll', fn);
   }, []);
@@ -103,77 +123,71 @@ const Navbar = () => {
   const links = ['Features', 'About', 'Ideas'];
 
   return (
-    <motion.header
-      initial={{ y: -80, opacity: 0 }}
-      animate={{ y: 0, opacity: 1 }}
-      transition={{ type: 'spring', stiffness: 120, delay: 0.1 }}
-      className={`fixed top-0 left-0 right-0 z-40 transition-all duration-300 ${
-        scrolled ? 'bg-[#050a14]/90 backdrop-blur-xl border-b border-white/5 shadow-xl shadow-black/30' : ''
+    <header
+      className={`fixed top-0 left-0 right-0 z-40 transition-colors duration-200 will-change-[background-color] ${
+        scrolled ? 'bg-[#050a14]/95 border-b border-white/5 shadow-lg shadow-black/20' : ''
       }`}
     >
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex items-center justify-between h-16 md:h-20">
-        {/* Logo */}
-        <a href="#" className="flex items-center gap-3 group">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex items-center justify-between h-14 md:h-16">
+        <a href="#" className="flex items-center gap-2.5 group">
           <div
-            className="w-9 h-9 rounded-xl p-[2px] shadow-lg"
+            className="w-8 h-8 rounded-lg p-[2px]"
             style={{ background: 'linear-gradient(135deg, #FF6B6B, #4ECDC4)' }}
           >
-            <div className="w-full h-full rounded-xl bg-[#080e1d] flex items-center justify-center p-1.5">
+            <div className="w-full h-full rounded-lg bg-[#080e1d] flex items-center justify-center p-1">
               <img src={LOGO_URL} alt="Zavr" className="w-full h-full object-contain" />
             </div>
           </div>
-          <span className="hidden sm:block text-lg font-semibold text-white" style={{ fontFamily: 'Cormorant Garamond, serif' }}>
+          <span className="hidden sm:block text-base font-semibold text-white" style={{ fontFamily: 'Cormorant Garamond, serif' }}>
             Zavr
           </span>
         </a>
 
-        {/* Desktop links */}
-        <nav className="hidden md:flex items-center gap-8">
+        <nav className="hidden md:flex items-center gap-7">
           {links.map(link => (
             <a
               key={link}
               href={`#${link.toLowerCase()}`}
-              className="text-sm font-medium text-white/60 hover:text-white transition-colors relative group"
+              className="text-sm font-medium text-white/60 hover:text-white transition-colors duration-150 relative group"
             >
               {link}
-              <span className="absolute -bottom-0.5 left-0 w-0 h-px bg-gradient-to-r from-[#FF6B6B] to-[#4ECDC4] group-hover:w-full transition-all duration-300" />
+              <span className="absolute -bottom-0.5 left-0 w-0 h-px bg-gradient-to-r from-[#FF6B6B] to-[#4ECDC4] group-hover:w-full transition-all duration-200" />
             </a>
           ))}
         </nav>
 
-        {/* CTA */}
         <div className="hidden md:flex items-center gap-3">
           <a
             href="#features"
-            className="px-5 py-2 rounded-xl text-sm font-semibold text-white transition-all hover:-translate-y-0.5"
-            style={{ background: 'linear-gradient(135deg,#FF6B6B,#4ECDC4)', boxShadow: '0 4px 24px rgba(255,107,107,0.25)' }}
+            className="px-5 py-2 rounded-xl text-sm font-semibold text-white transition-transform duration-150 hover:-translate-y-0.5"
+            style={{ background: 'linear-gradient(135deg,#FF6B6B,#4ECDC4)', boxShadow: '0 4px 16px rgba(255,107,107,0.2)' }}
           >
             Get Started
           </a>
         </div>
 
-        {/* Mobile toggle */}
-        <button onClick={() => setOpen(!open)} className="md:hidden text-white/70 hover:text-white p-2 rounded-lg hover:bg-white/5">
+        <button onClick={() => setOpen(!open)} className="md:hidden text-white/70 hover:text-white p-2 rounded-lg active:bg-white/5">
           {open ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
         </button>
       </div>
 
-      {/* Mobile menu */}
       <AnimatePresence>
         {open && (
           <motion.div
             initial={{ height: 0, opacity: 0 }}
             animate={{ height: 'auto', opacity: 1 }}
             exit={{ height: 0, opacity: 0 }}
-            className="md:hidden bg-[#080e1d]/95 backdrop-blur-xl border-t border-white/5 overflow-hidden"
+            transition={{ duration: 0.2 }}
+            className="md:hidden bg-[#080e1d]/95 border-t border-white/5 overflow-hidden"
+            style={{ backdropFilter: 'blur(12px)', WebkitBackdropFilter: 'blur(12px)' }}
           >
-            <div className="px-4 py-4 flex flex-col gap-2">
+            <div className="px-4 py-3 flex flex-col gap-1">
               {links.map(link => (
                 <a
                   key={link}
                   href={`#${link.toLowerCase()}`}
                   onClick={() => setOpen(false)}
-                  className="px-4 py-2.5 rounded-xl text-white/70 hover:text-white hover:bg-white/5 transition-all text-sm font-medium"
+                  className="px-4 py-2 rounded-lg text-white/70 hover:text-white active:bg-white/5 text-sm font-medium"
                 >
                   {link}
                 </a>
@@ -181,7 +195,7 @@ const Navbar = () => {
               <a
                 href="#features"
                 onClick={() => setOpen(false)}
-                className="mt-2 px-4 py-2.5 rounded-xl text-center text-sm font-semibold text-white"
+                className="mt-1 px-4 py-2.5 rounded-lg text-center text-sm font-semibold text-white"
                 style={{ background: 'linear-gradient(135deg,#FF6B6B,#4ECDC4)' }}
               >
                 Get Started
@@ -190,182 +204,147 @@ const Navbar = () => {
           </motion.div>
         )}
       </AnimatePresence>
-    </motion.header>
+    </header>
   );
 };
 
 // ─── Hero ─────────────────────────────────────────────────────────────────────
-const Hero = () => {
-  const containerRef = useRef<HTMLDivElement>(null);
+const Hero = () => (
+  <section className="relative min-h-screen flex items-center justify-center overflow-hidden bg-[#050a14] pt-14">
+    {/* Static decorative blobs — no blur, using opacity + gradients instead */}
+    <div className="absolute top-1/4 -left-16 w-64 h-64 rounded-full opacity-[0.07] bg-[#FF6B6B] pointer-events-none" aria-hidden="true" />
+    <div className="absolute bottom-1/4 -right-16 w-64 h-64 rounded-full opacity-[0.07] bg-[#4ECDC4] pointer-events-none" aria-hidden="true" />
+    <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-48 h-48 rounded-full opacity-[0.04] bg-[#FFD93D] pointer-events-none" aria-hidden="true" />
 
-  return (
-    <section className="relative min-h-screen flex items-center justify-center overflow-hidden bg-[#050a14] pt-16">
-      <div className="absolute inset-0 bg-dots" />
+    <div className="relative z-10 w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 md:py-20">
+      <div className="text-center">
+        <motion.div
+          {...fadeUp}
+          transition={{ duration: 0.4 }}
+          className="inline-flex items-center gap-2 px-4 py-2 rounded-full border border-white/10 bg-white/5 text-white/70 text-sm mb-6"
+        >
+          <Sparkles className="w-3.5 h-3.5 text-[#FFD93D]" />
+          Introducing Zavr 2.1 — New Group Goals
+        </motion.div>
 
-      {/* Gradient blobs */}
-      <div className="absolute top-1/4 -left-32 w-96 h-96 rounded-full blur-[100px] opacity-20" style={{ background: '#FF6B6B' }} />
-      <div className="absolute bottom-1/4 -right-32 w-96 h-96 rounded-full blur-[100px] opacity-20" style={{ background: '#4ECDC4' }} />
-      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-72 h-72 rounded-full blur-[80px] opacity-10" style={{ background: '#FFD93D' }} />
-
-      <div ref={containerRef} className="relative z-10 w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20">
-        <div className="text-center">
-          {/* Badge */}
-          <motion.div
-            initial={{ opacity: 0, y: 24 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5 }}
-            className="inline-flex items-center gap-2 px-4 py-2 rounded-full border border-white/10 bg-white/5 text-white/70 text-sm mb-8"
+        <motion.h1
+          {...fadeUp}
+          transition={{ duration: 0.45, delay: 0.05 }}
+          className="text-4xl sm:text-5xl md:text-7xl font-light leading-[1.08] tracking-tight text-white mb-6"
+          style={{ fontFamily: 'Cormorant Garamond, serif' }}
+        >
+          Achieve Your
+          <br />
+          <span
+            className="font-normal animate-gradient"
+            style={{
+              backgroundImage: 'linear-gradient(135deg,#FF6B6B,#4ECDC4,#FFD93D,#FF6B6B)',
+              backgroundSize: '300% 300%',
+              WebkitBackgroundClip: 'text',
+              WebkitTextFillColor: 'transparent',
+              backgroundClip: 'text',
+            }}
           >
-            <Sparkles className="w-3.5 h-3.5 text-[#FFD93D]" />
-            Introducing Zavr 2.1 — New Group Goals
-          </motion.div>
+            Savings Goals
+          </span>
+        </motion.h1>
 
-          {/* Headline */}
-          <motion.h1
-            initial={{ opacity: 0, y: 32 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6, delay: 0.1 }}
-            className="text-5xl sm:text-6xl md:text-8xl font-light leading-[1.05] tracking-tight text-white mb-8"
-            style={{ fontFamily: 'Cormorant Garamond, serif' }}
+        <motion.p
+          {...fadeUp}
+          transition={{ duration: 0.4, delay: 0.1 }}
+          className="text-base md:text-lg text-white/50 max-w-lg mx-auto leading-relaxed mb-10"
+        >
+          Zavr combines solo goals, group savings, streaks, and weekly challenges into a beautifully crafted experience.
+        </motion.p>
+
+        <motion.div
+          {...fadeUp}
+          transition={{ duration: 0.4, delay: 0.15 }}
+          className="flex flex-col sm:flex-row items-center justify-center gap-3"
+        >
+          <a
+            href="#features"
+            className="group inline-flex items-center gap-2 px-7 py-3 rounded-2xl text-white font-semibold text-sm transition-transform duration-150 hover:-translate-y-0.5"
+            style={{
+              background: 'linear-gradient(135deg,#FF6B6B,#4ECDC4)',
+              boxShadow: '0 6px 24px rgba(255,107,107,0.25)',
+            }}
           >
-            Achieve Your
-            <br />
-            <span
-              className="font-normal animate-gradient"
-              style={{
-                backgroundImage: 'linear-gradient(135deg,#FF6B6B,#4ECDC4,#FFD93D,#FF6B6B)',
-                backgroundSize: '300% 300%',
-                WebkitBackgroundClip: 'text',
-                WebkitTextFillColor: 'transparent',
-                backgroundClip: 'text',
-              }}
-            >
-              Savings Goals
-            </span>
-          </motion.h1>
-
-          {/* Subline */}
-          <motion.p
-            initial={{ opacity: 0, y: 24 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6, delay: 0.2 }}
-            className="text-lg md:text-xl text-white/55 max-w-xl mx-auto leading-relaxed mb-12"
+            Explore the App
+            <ArrowRight className="w-4 h-4 group-hover:translate-x-0.5 transition-transform duration-150" />
+          </a>
+          <a
+            href="#features"
+            className="inline-flex items-center gap-2 px-7 py-3 rounded-2xl text-white/60 hover:text-white font-medium text-sm border border-white/10 hover:border-white/20 hover:bg-white/5 transition-colors duration-150"
           >
-            Zavr combines solo goals, group savings, streaks, and weekly challenges into a beautifully crafted experience.
-          </motion.p>
+            Explore Features
+          </a>
+        </motion.div>
 
-          {/* CTAs */}
-          <motion.div
-            initial={{ opacity: 0, y: 24 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6, delay: 0.3 }}
-            className="flex flex-col sm:flex-row items-center justify-center gap-4"
-          >
-            <a
-              href="#features"
-              className="group inline-flex items-center gap-2 px-8 py-3.5 rounded-2xl text-white font-semibold text-base transition-all hover:-translate-y-1 hover:shadow-2xl"
-              style={{
-                background: 'linear-gradient(135deg,#FF6B6B,#4ECDC4)',
-                boxShadow: '0 8px 32px rgba(255,107,107,0.3)',
-              }}
-            >
-              Explore the App
-              <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
-            </a>
-            <a
-              href="#features"
-              className="inline-flex items-center gap-2 px-8 py-3.5 rounded-2xl text-white/70 hover:text-white font-medium text-base border border-white/10 hover:border-white/20 hover:bg-white/5 transition-all"
-            >
-              Explore Features
-            </a>
-          </motion.div>
+        {/* App preview card */}
+        <motion.div
+          initial={{ opacity: 0, y: 30 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5, delay: 0.3 }}
+          className="mt-14 md:mt-20 relative"
+        >
+          <div className="relative max-w-3xl mx-auto">
+            <div className="rounded-2xl p-px" style={{ background: 'linear-gradient(135deg,rgba(255,107,107,0.3),rgba(78,205,196,0.3),rgba(255,217,61,0.15))' }}>
+              <div className="rounded-2xl bg-[#0a1220] p-5 md:p-6">
+                {/* Stats row */}
+                <div className="grid grid-cols-3 gap-3 mb-4">
+                  {[
+                    { icon: Target, label: 'Goals Active', value: '12', color: '#FF6B6B' },
+                    { icon: TrendingUp, label: 'Total Saved', value: '$8,240', color: '#4ECDC4' },
+                    { icon: Award, label: 'Day Streak', value: '34', color: '#FFD93D' },
+                  ].map((s) => (
+                    <div key={s.label} className="glass-dark rounded-xl p-3 text-left">
+                      <div className="w-8 h-8 rounded-lg flex items-center justify-center mb-2" style={{ background: s.color + '18' }}>
+                        <s.icon className="w-4 h-4" style={{ color: s.color }} />
+                      </div>
+                      <p className="text-lg font-bold text-white mb-0.5" style={{ fontFamily: 'Cormorant Garamond, serif' }}>{s.value}</p>
+                      <p className="text-[10px] text-white/40">{s.label}</p>
+                    </div>
+                  ))}
+                </div>
 
-          {/* App preview card */}
-          <motion.div
-            initial={{ opacity: 0, y: 60, scale: 0.92 }}
-            animate={{ opacity: 1, y: 0, scale: 1 }}
-            transition={{ duration: 0.8, delay: 0.5 }}
-            className="mt-20 relative"
-          >
-            {/* Glow behind card */}
-            <div
-              className="absolute inset-x-1/4 top-0 h-1/2 blur-3xl opacity-30"
-              style={{ background: 'linear-gradient(135deg,#FF6B6B,#4ECDC4)' }}
-            />
-            <div className="relative max-w-4xl mx-auto">
-              <div className="rounded-3xl p-px" style={{ background: 'linear-gradient(135deg,rgba(255,107,107,0.4),rgba(78,205,196,0.4),rgba(255,217,61,0.2))' }}>
-                <div className="rounded-3xl bg-[#0a1220] p-8">
-                  {/* Stats row */}
-                  <div className="grid grid-cols-3 gap-4 mb-6">
-                    {[
-                      { icon: Target, label: 'Goals Active', value: '12', color: '#FF6B6B' },
-                      { icon: TrendingUp, label: 'Total Saved', value: '$8,240', color: '#4ECDC4' },
-                      { icon: Award, label: 'Day Streak', value: '34', color: '#FFD93D' },
-                    ].map((s, i) => (
-                      <motion.div
-                        key={s.label}
-                        initial={{ opacity: 0, y: 16 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ delay: 0.7 + i * 0.1 }}
-                        className="glass-dark rounded-2xl p-4 text-left"
-                      >
-                        <div className="w-9 h-9 rounded-xl flex items-center justify-center mb-3" style={{ background: s.color + '20' }}>
-                          <s.icon className="w-4 h-4" style={{ color: s.color }} />
-                        </div>
-                        <p className="text-xl font-bold text-white mb-0.5" style={{ fontFamily: 'Cormorant Garamond, serif' }}>{s.value}</p>
-                        <p className="text-xs text-white/40">{s.label}</p>
-                      </motion.div>
-                    ))}
-                  </div>
-
-                  {/* Progress bars */}
-                  <div className="space-y-3">
-                    {[
-                      { name: 'Vacation Fund', progress: 72, color: '#FF6B6B' },
-                      { name: 'Emergency Fund', progress: 45, color: '#4ECDC4' },
-                      { name: 'New Laptop', progress: 88, color: '#FFD93D' },
-                    ].map((g, i) => (
-                      <motion.div
-                        key={g.name}
-                        initial={{ opacity: 0, x: -16 }}
-                        animate={{ opacity: 1, x: 0 }}
-                        transition={{ delay: 0.9 + i * 0.1 }}
-                        className="flex items-center gap-4"
-                      >
-                        <p className="text-xs text-white/50 w-28 shrink-0">{g.name}</p>
-                        <div className="flex-1 h-1.5 rounded-full bg-white/5">
-                          <motion.div
-                            initial={{ width: 0 }}
-                            animate={{ width: `${g.progress}%` }}
-                            transition={{ duration: 1.2, delay: 1 + i * 0.15, ease: 'easeOut' }}
-                            className="h-full rounded-full"
-                            style={{ background: g.color }}
-                          />
-                        </div>
-                        <p className="text-xs text-white/40 w-8 text-right">{g.progress}%</p>
-                      </motion.div>
-                    ))}
-                  </div>
+                {/* Progress bars — CSS transitions instead of framer-motion */}
+                <div className="space-y-2.5">
+                  {[
+                    { name: 'Vacation Fund', progress: 72, color: '#FF6B6B' },
+                    { name: 'Emergency Fund', progress: 45, color: '#4ECDC4' },
+                    { name: 'New Laptop', progress: 88, color: '#FFD93D' },
+                  ].map((g) => (
+                    <div key={g.name} className="flex items-center gap-3">
+                      <p className="text-[11px] text-white/50 w-24 shrink-0">{g.name}</p>
+                      <div className="flex-1 h-1.5 rounded-full bg-white/5 overflow-hidden">
+                        <div
+                          className="h-full rounded-full animate-progress"
+                          style={{ background: g.color, '--target-width': `${g.progress}%` } as React.CSSProperties}
+                        />
+                      </div>
+                      <p className="text-[11px] text-white/40 w-7 text-right">{g.progress}%</p>
+                    </div>
+                  ))}
                 </div>
               </div>
             </div>
-          </motion.div>
-        </div>
+          </div>
+        </motion.div>
       </div>
+    </div>
 
-      {/* Scroll hint */}
-      <motion.div
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ delay: 0.6, duration: 0.3 }}
-        className="absolute bottom-8 left-1/2 -translate-x-1/2 flex flex-col items-center gap-1 text-white/30"
-      >
-        <span className="text-xs tracking-widest uppercase">Scroll</span>
-        <ChevronDown className="w-4 h-4 animate-bounce" />
-      </motion.div>
-    </section>
-  );
-};
+    {/* Scroll hint */}
+    <motion.div
+      {...fadeIn}
+      transition={{ delay: 0.5, duration: 0.3 }}
+      className="absolute bottom-6 left-1/2 -translate-x-1/2 flex flex-col items-center gap-1 text-white/30"
+    >
+      <span className="text-[10px] tracking-widest uppercase">Scroll</span>
+      <ChevronDown className="w-3.5 h-3.5 animate-bounce" />
+    </motion.div>
+  </section>
+);
 
 // ─── Features ─────────────────────────────────────────────────────────────────
 const featuresList = [
@@ -377,50 +356,47 @@ const featuresList = [
   { icon: Palette, title: 'Claymorphism UI', desc: 'A tactile, soft-shadowed aesthetic with multi-layered depth. Dark mode by default with glassmorphism effects.', color: '#FFD93D' },
 ];
 
-const Features = () => (
-  <section id="features" className="py-24 md:py-32 bg-[#060c18] relative overflow-hidden">
-    <div className="absolute inset-0 bg-dots opacity-50" />
-    <div className="absolute top-0 right-0 w-1/3 h-1/2 blur-[120px] opacity-10 rounded-full" style={{ background: '#FF6B6B' }} />
-    <div className="absolute bottom-0 left-0 w-1/3 h-1/2 blur-[120px] opacity-10 rounded-full" style={{ background: '#4ECDC4' }} />
+const FeatureCard = ({ f }: { f: typeof featuresList[number] }) => (
+  <motion.div
+    {...fadeUp}
+    viewport={{ once: true, margin: '-40px' }}
+    transition={{ duration: 0.35 }}
+    className="glass-dark rounded-2xl p-6 transition-colors duration-200 cursor-default group"
+  >
+    <div className="w-10 h-10 rounded-lg flex items-center justify-center mb-4 transition-transform group-hover:scale-110 duration-200" style={{ background: f.color + '18' }}>
+      <f.icon className="w-5 h-5" style={{ color: f.color }} />
+    </div>
+    <h3 className="text-base font-semibold text-white mb-1.5">{f.title}</h3>
+    <p className="text-white/45 text-sm leading-relaxed">{f.desc}</p>
+  </motion.div>
+);
 
+const Features = () => (
+  <section id="features" className="py-16 md:py-24 bg-[#060c18] relative overflow-hidden content-visibility-auto">
     <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
       <motion.div
-        initial={{ opacity: 0, y: 32 }}
-        whileInView={{ opacity: 1, y: 0 }}
+        {...fadeUp}
         viewport={{ once: true }}
-        transition={{ duration: 0.6 }}
-        className="text-center mb-16"
+        transition={{ duration: 0.4 }}
+        className="text-center mb-12"
       >
-        <span className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-[#FF6B6B]/10 border border-[#FF6B6B]/20 text-[#FF6B6B] text-xs font-semibold tracking-wide uppercase mb-5">
+        <span className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-[#FF6B6B]/10 border border-[#FF6B6B]/20 text-[#FF6B6B] text-xs font-semibold tracking-wide uppercase mb-4">
           <Zap className="w-3.5 h-3.5" /> Features
         </span>
-        <h2 className="text-4xl md:text-6xl font-light text-white mb-5" style={{ fontFamily: 'Cormorant Garamond, serif' }}>
+        <h2 className="text-3xl md:text-5xl font-light text-white mb-4" style={{ fontFamily: 'Cormorant Garamond, serif' }}>
           Everything You Need to{' '}
           <span className="text-gradient-coral italic">Save Successfully</span>
         </h2>
-        <p className="text-white/50 text-lg max-w-xl mx-auto">
+        <p className="text-white/45 text-base max-w-lg mx-auto">
           Powerful tools wrapped in a beautiful, motivating design.
         </p>
       </motion.div>
 
-      <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-5">
-        {featuresList.map((f, i) => (
-          <motion.div
-            key={f.title}
-            initial={{ opacity: 0, y: 32 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.5, delay: i * 0.08 }}
-            className="glass-dark rounded-2xl p-7 transition-all duration-300 cursor-default group"
-          >
-            <div className="w-12 h-12 rounded-xl flex items-center justify-center mb-5 transition-transform group-hover:scale-110 duration-300" style={{ background: f.color + '18' }}>
-              <f.icon className="w-6 h-6" style={{ color: f.color }} />
-            </div>
-            <h3 className="text-lg font-semibold text-white mb-2">{f.title}</h3>
-            <p className="text-white/50 text-sm leading-relaxed">{f.desc}</p>
-          </motion.div>
+      <motion.div {...stagger} className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
+        {featuresList.map((f) => (
+          <FeatureCard key={f.title} f={f} />
         ))}
-      </div>
+      </motion.div>
     </div>
   </section>
 );
@@ -431,49 +407,44 @@ const About = () => {
     { value: '50K+', label: 'Active Users' },
     { value: '$2M+', label: 'Saved Monthly' },
     { value: '98%', label: 'Goal Success' },
-    { value: '4.9★', label: 'Store Rating' },
+    { value: '4.9\u2605', label: 'Store Rating' },
   ];
 
   const stack = ['React 18', 'TypeScript', 'Vite', 'Tailwind CSS', 'Zustand', 'Framer Motion', 'Recharts', 'Supabase'];
 
   return (
-    <section id="about" className="py-24 md:py-32 bg-[#050a14] relative overflow-hidden">
-      <div className="absolute inset-y-0 left-0 w-1/2 bg-gradient-to-r from-[#FF6B6B]/3 to-transparent" />
-
+    <section id="about" className="py-16 md:py-24 bg-[#050a14] relative overflow-hidden content-visibility-auto">
       <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="grid lg:grid-cols-2 gap-16 items-center">
-          {/* Left */}
+        <div className="grid lg:grid-cols-2 gap-12 items-center">
           <motion.div
-            initial={{ opacity: 0, x: -40 }}
-            whileInView={{ opacity: 1, x: 0 }}
+            {...fadeUp}
             viewport={{ once: true }}
-            transition={{ duration: 0.6 }}
+            transition={{ duration: 0.4 }}
           >
-            <span className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-[#4ECDC4]/10 border border-[#4ECDC4]/20 text-[#4ECDC4] text-xs font-semibold tracking-wide uppercase mb-5">
+            <span className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-[#4ECDC4]/10 border border-[#4ECDC4]/20 text-[#4ECDC4] text-xs font-semibold tracking-wide uppercase mb-4">
               <Heart className="w-3.5 h-3.5" /> About Zavr
             </span>
-            <h2 className="text-4xl md:text-5xl font-light text-white mb-6 leading-tight" style={{ fontFamily: 'Cormorant Garamond, serif' }}>
+            <h2 className="text-3xl md:text-4xl font-light text-white mb-5 leading-tight" style={{ fontFamily: 'Cormorant Garamond, serif' }}>
               Built with Passion for{' '}
               <span className="text-gradient-teal italic">Smarter Saving</span>
             </h2>
-            <div className="space-y-4 text-white/55 leading-relaxed text-sm">
+            <div className="space-y-3 text-white/50 leading-relaxed text-sm">
               <p>
-                Zavr is a fully-featured savings and goal-tracking app crafted with React 18, TypeScript, and a distinctive <strong className="text-white/80">claymorphism</strong> design philosophy — tactile, soft-shadowed aesthetics with multi-layered depth.
+                Zavr is a fully-featured savings and goal-tracking app crafted with React 18, TypeScript, and a distinctive <strong className="text-white/75">claymorphism</strong> design philosophy.
               </p>
               <p>
-                The color palette of Coral, Teal, and Gold set against a deep dark base creates a premium feel that motivates daily use. Every interaction is animated with Framer Motion for a fluid, delightful experience.
+                The color palette of Coral, Teal, and Gold set against a deep dark base creates a premium feel that motivates daily use. Every interaction is animated for a fluid, delightful experience.
               </p>
               <p>
                 Whether you're tracking solo savings, collaborating on group goals, or competing in weekly challenges, Zavr makes financial discipline feel rewarding.
               </p>
             </div>
 
-            {/* Tech stack */}
-            <div className="mt-8">
-              <p className="text-xs text-white/30 uppercase tracking-widest mb-3">Tech Stack</p>
-              <div className="flex flex-wrap gap-2">
+            <div className="mt-6">
+              <p className="text-[10px] text-white/25 uppercase tracking-widest mb-2">Tech Stack</p>
+              <div className="flex flex-wrap gap-1.5">
                 {stack.map(s => (
-                  <span key={s} className="px-3 py-1 rounded-lg bg-white/5 border border-white/8 text-white/60 text-xs font-medium">
+                  <span key={s} className="px-2.5 py-1 rounded-md bg-white/5 border border-white/8 text-white/55 text-xs font-medium">
                     {s}
                   </span>
                 ))}
@@ -481,63 +452,51 @@ const About = () => {
             </div>
           </motion.div>
 
-          {/* Right */}
           <motion.div
-            initial={{ opacity: 0, x: 40 }}
-            whileInView={{ opacity: 1, x: 0 }}
+            {...fadeUp}
             viewport={{ once: true }}
-            transition={{ duration: 0.6 }}
-            className="space-y-4"
+            transition={{ duration: 0.4, delay: 0.05 }}
+            className="space-y-3"
           >
-            {/* Stats */}
-            <div className="grid grid-cols-2 gap-4">
-              {stats.map((s, i) => (
-                <motion.div
-                  key={s.label}
-                  initial={{ opacity: 0, scale: 0.85 }}
-                  whileInView={{ opacity: 1, scale: 1 }}
-                  viewport={{ once: true }}
-                  transition={{ delay: i * 0.1 }}
-                  className="glass-dark rounded-2xl p-6 text-center"
-                >
+            <div className="grid grid-cols-2 gap-3">
+              {stats.map((s) => (
+                <div key={s.label} className="glass-dark rounded-xl p-4 text-center">
                   <p
-                    className="text-3xl font-bold text-transparent bg-clip-text mb-1"
+                    className="text-2xl font-bold text-transparent bg-clip-text mb-0.5"
                     style={{ backgroundImage: 'linear-gradient(135deg,#FF6B6B,#4ECDC4,#FFD93D)' }}
                   >
                     {s.value}
                   </p>
-                  <p className="text-xs text-white/40">{s.label}</p>
-                </motion.div>
+                  <p className="text-[10px] text-white/35">{s.label}</p>
+                </div>
               ))}
             </div>
 
-            {/* Testimonial */}
-            <div className="glass-dark rounded-2xl p-6">
-              <div className="flex gap-1 mb-3">
+            <div className="glass-dark rounded-xl p-5">
+              <div className="flex gap-0.5 mb-2">
                 {[...Array(5)].map((_, i) => (
-                  <Star key={i} className="w-3.5 h-3.5 fill-[#FFD93D] text-[#FFD93D]" />
+                  <Star key={i} className="w-3 h-3 fill-[#FFD93D] text-[#FFD93D]" />
                 ))}
               </div>
-              <p className="text-sm text-white/70 leading-relaxed italic mb-4">
+              <p className="text-sm text-white/65 leading-relaxed italic mb-3">
                 "Zavr changed how I think about saving. The streak system keeps me motivated every single day, and saving with my partner on group goals made it actually fun!"
               </p>
-              <div className="flex items-center gap-3">
-                <div className="w-8 h-8 rounded-full" style={{ background: 'linear-gradient(135deg,#FF6B6B,#4ECDC4)' }} />
+              <div className="flex items-center gap-2.5">
+                <div className="w-7 h-7 rounded-full" style={{ background: 'linear-gradient(135deg,#FF6B6B,#4ECDC4)' }} />
                 <div>
                   <p className="text-xs font-semibold text-white">Sarah M.</p>
-                  <p className="text-xs text-white/30">Verified User</p>
+                  <p className="text-[10px] text-white/25">Verified User</p>
                 </div>
               </div>
             </div>
 
-            {/* Security badge */}
-            <div className="glass-dark rounded-2xl p-5 flex items-center gap-4">
-              <div className="w-10 h-10 rounded-xl bg-[#4ECDC4]/15 flex items-center justify-center flex-shrink-0">
-                <Shield className="w-5 h-5 text-[#4ECDC4]" />
+            <div className="glass-dark rounded-xl p-4 flex items-center gap-3">
+              <div className="w-9 h-9 rounded-lg bg-[#4ECDC4]/12 flex items-center justify-center flex-shrink-0">
+                <Shield className="w-4 h-4 text-[#4ECDC4]" />
               </div>
               <div>
                 <p className="text-sm font-semibold text-white">Secure by Design</p>
-                <p className="text-xs text-white/40">Supabase RLS • Row-level security • No plain-text passwords</p>
+                <p className="text-[10px] text-white/35">Supabase RLS &bull; Row-level security &bull; No plain-text passwords</p>
               </div>
             </div>
           </motion.div>
@@ -557,60 +516,60 @@ const ideasList = [
   { title: 'Wedding Fund', desc: 'Plan the big day with family contributions and detailed tracking.', gradient: 'from-[#FFD93D] to-[#FF6B6B]', icon: Heart },
 ];
 
-const Ideas = () => (
-  <section id="ideas" className="py-24 md:py-32 bg-[#060c18] relative overflow-hidden">
-    <div className="absolute inset-0 bg-dots opacity-40" />
+const IdeaCard = ({ idea }: { idea: typeof ideasList[number] }) => (
+  <motion.div
+    {...fadeUp}
+    viewport={{ once: true, margin: '-40px' }}
+    transition={{ duration: 0.35 }}
+    className="glass-dark rounded-2xl p-5 cursor-pointer group hover:scale-[1.01] transition-transform duration-200"
+  >
+    <div className={`w-10 h-10 rounded-lg bg-gradient-to-br ${idea.gradient} flex items-center justify-center mb-3 group-hover:scale-105 transition-transform duration-200`}>
+      <idea.icon className="w-4.5 h-4.5 text-white" />
+    </div>
+    <h3 className="text-sm font-semibold text-white mb-1.5">{idea.title}</h3>
+    <p className="text-[11px] text-white/45 leading-relaxed">{idea.desc}</p>
+  </motion.div>
+);
 
+const Ideas = () => (
+  <section id="ideas" className="py-16 md:py-24 bg-[#060c18] relative overflow-hidden content-visibility-auto">
     <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
       <motion.div
-        initial={{ opacity: 0, y: 32 }}
-        whileInView={{ opacity: 1, y: 0 }}
+        {...fadeUp}
         viewport={{ once: true }}
-        className="text-center mb-16"
+        transition={{ duration: 0.4 }}
+        className="text-center mb-12"
       >
-        <span className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-[#FFD93D]/10 border border-[#FFD93D]/20 text-[#FFD93D] text-xs font-semibold tracking-wide uppercase mb-5">
+        <span className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-[#FFD93D]/10 border border-[#FFD93D]/20 text-[#FFD93D] text-xs font-semibold tracking-wide uppercase mb-4">
           <Sparkles className="w-3.5 h-3.5" /> Goal Ideas
         </span>
-        <h2 className="text-4xl md:text-6xl font-light text-white mb-5" style={{ fontFamily: 'Cormorant Garamond, serif' }}>
+        <h2 className="text-3xl md:text-5xl font-light text-white mb-4" style={{ fontFamily: 'Cormorant Garamond, serif' }}>
           What Can You{' '}
           <span className="text-gradient-gold italic">Save For?</span>
         </h2>
-        <p className="text-white/50 text-lg max-w-xl mx-auto">
+        <p className="text-white/45 text-base max-w-lg mx-auto">
           Get inspired by popular savings goals from our community.
         </p>
       </motion.div>
 
-      <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-5">
-        {ideasList.map((idea, i) => (
-          <motion.div
-            key={idea.title}
-            initial={{ opacity: 0, y: 32 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.5, delay: i * 0.08 }}
-            className="glass-dark rounded-2xl p-6 cursor-pointer group hover:scale-[1.02] transition-all duration-300"
-          >
-            <div className={`w-11 h-11 rounded-xl bg-gradient-to-br ${idea.gradient} flex items-center justify-center mb-4 group-hover:scale-110 transition-transform duration-300 shadow-lg`}>
-              <idea.icon className="w-5 h-5 text-white" />
-            </div>
-            <h3 className="text-base font-semibold text-white mb-2">{idea.title}</h3>
-            <p className="text-xs text-white/50 leading-relaxed">{idea.desc}</p>
-          </motion.div>
+      <motion.div {...stagger} className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
+        {ideasList.map((idea) => (
+          <IdeaCard key={idea.title} idea={idea} />
         ))}
-      </div>
+      </motion.div>
 
       <motion.div
-        initial={{ opacity: 0, y: 16 }}
-        whileInView={{ opacity: 1, y: 0 }}
+        {...fadeUp}
         viewport={{ once: true }}
-        className="mt-12 text-center"
+        transition={{ duration: 0.35 }}
+        className="mt-10 text-center"
       >
-        <p className="text-white/40 text-sm mb-5">Have your own idea? Create unlimited custom goals with Zavr.</p>
+        <p className="text-white/35 text-sm mb-4">Have your own idea? Create unlimited custom goals with Zavr.</p>
         <a
           href="#about"
-          className="inline-flex items-center gap-2 px-6 py-3 rounded-xl border border-[#FFD93D]/30 text-[#FFD93D] text-sm font-medium hover:bg-[#FFD93D]/10 transition-all"
+          className="inline-flex items-center gap-2 px-5 py-2.5 rounded-lg border border-[#FFD93D]/25 text-[#FFD93D] text-sm font-medium hover:bg-[#FFD93D]/8 transition-colors duration-150"
         >
-          Learn More <ArrowRight className="w-4 h-4" />
+          Learn More <ArrowRight className="w-3.5 h-3.5" />
         </a>
       </motion.div>
     </div>
@@ -619,40 +578,40 @@ const Ideas = () => (
 
 // ─── Footer ───────────────────────────────────────────────────────────────────
 const Footer = () => (
-  <footer className="bg-[#030709] border-t border-white/5 py-14">
+  <footer className="bg-[#030709] border-t border-white/5 py-10 content-visibility-auto">
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-      <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-10">
-        <div className="lg:col-span-2">
-          <div className="flex items-center gap-3 mb-4">
-            <div className="w-9 h-9 rounded-xl p-[2px]" style={{ background: 'linear-gradient(135deg,#FF6B6B,#4ECDC4)' }}>
-              <div className="w-full h-full rounded-xl bg-[#080e1d] flex items-center justify-center p-1.5">
+      <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-8">
+        <div className="sm:col-span-2">
+          <div className="flex items-center gap-2.5 mb-3">
+            <div className="w-8 h-8 rounded-lg p-[2px]" style={{ background: 'linear-gradient(135deg,#FF6B6B,#4ECDC4)' }}>
+              <div className="w-full h-full rounded-lg bg-[#080e1d] flex items-center justify-center p-1">
                 <img src={LOGO_URL} alt="Zavr" className="w-full h-full object-contain" />
               </div>
             </div>
-            <span className="text-lg font-semibold text-white" style={{ fontFamily: 'Cormorant Garamond, serif' }}>Zavr</span>
+            <span className="text-base font-semibold text-white" style={{ fontFamily: 'Cormorant Garamond, serif' }}>Zavr</span>
           </div>
-          <p className="text-white/40 text-sm leading-relaxed max-w-xs">
+          <p className="text-white/35 text-sm leading-relaxed max-w-xs">
             Save smarter, together. Beautiful design meets powerful savings tools.
           </p>
         </div>
         <div>
-          <h4 className="text-xs font-semibold text-white/30 uppercase tracking-widest mb-4">Product</h4>
-          <ul className="space-y-2.5">
+          <h4 className="text-[10px] font-semibold text-white/25 uppercase tracking-widest mb-3">Product</h4>
+          <ul className="space-y-2">
             {['Features', 'Changelog', 'Roadmap', 'Open Source'].map(l => (
-              <li key={l}><a href="#" className="text-sm text-white/50 hover:text-white transition-colors">{l}</a></li>
+              <li key={l}><a href="#" className="text-sm text-white/45 hover:text-white transition-colors duration-150">{l}</a></li>
             ))}
           </ul>
         </div>
         <div>
-          <h4 className="text-xs font-semibold text-white/30 uppercase tracking-widest mb-4">Company</h4>
-          <ul className="space-y-2.5">
+          <h4 className="text-[10px] font-semibold text-white/25 uppercase tracking-widest mb-3">Company</h4>
+          <ul className="space-y-2">
             {['About', 'Blog', 'Careers', 'Contact'].map(l => (
-              <li key={l}><a href="#" className="text-sm text-white/50 hover:text-white transition-colors">{l}</a></li>
+              <li key={l}><a href="#" className="text-sm text-white/45 hover:text-white transition-colors duration-150">{l}</a></li>
             ))}
             <li>
               <button
                 onClick={() => window.dispatchEvent(new CustomEvent('navigate', { detail: 'privacy' }))}
-                className="text-sm text-white/50 hover:text-white transition-colors text-left"
+                className="text-sm text-white/45 hover:text-white transition-colors duration-150 text-left"
               >
                 Privacy Policy
               </button>
@@ -660,10 +619,10 @@ const Footer = () => (
           </ul>
         </div>
       </div>
-      <div className="mt-12 pt-8 border-t border-white/5 flex flex-col sm:flex-row items-center justify-between gap-4">
-        <p className="text-xs text-white/25">© 2024 Zavr. All rights reserved.</p>
-        <p className="text-xs text-white/25 flex items-center gap-1.5">
-          Made with <Heart className="w-3 h-3 fill-[#FF6B6B] text-[#FF6B6B]" /> for savers everywhere
+      <div className="mt-10 pt-6 border-t border-white/5 flex flex-col sm:flex-row items-center justify-between gap-3">
+        <p className="text-[10px] text-white/20">&copy; 2024 Zavr. All rights reserved.</p>
+        <p className="text-[10px] text-white/20 flex items-center gap-1">
+          Made with <Heart className="w-2.5 h-2.5 fill-[#FF6B6B] text-[#FF6B6B]" /> for savers everywhere
         </p>
       </div>
     </div>
@@ -685,11 +644,13 @@ export default function App() {
     return () => window.removeEventListener('navigate', handler);
   }, []);
 
+  const dismissSplash = useCallback(() => setShowSplash(false), []);
+
   if (page === 'privacy') {
     return (
       <Suspense fallback={
         <div className="min-h-screen bg-[#050a14] flex items-center justify-center">
-          <div className="w-8 h-8 rounded-full border-2 border-[#4ECDC4]/30 border-t-[#4ECDC4] animate-spin" />
+          <div className="w-7 h-7 rounded-full border-2 border-[#4ECDC4]/30 border-t-[#4ECDC4] animate-spin" />
         </div>
       }>
         <PrivacyPolicy onBack={() => { setPage('home'); window.scrollTo({ top: 0 }); }} />
@@ -699,10 +660,10 @@ export default function App() {
 
   return (
     <div className="min-h-screen bg-[#050a14] text-white">
-      <AnimatePresence>{showSplash && <SplashScreen onDone={() => setShowSplash(false)} />}</AnimatePresence>
+      <AnimatePresence>{showSplash && <SplashScreen onDone={dismissSplash} />}</AnimatePresence>
 
       {!showSplash && (
-        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.4 }}>
+        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.3 }}>
           <Navbar />
           <Hero />
           <Features />

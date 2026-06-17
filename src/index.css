@@ -37,6 +37,8 @@
     @apply bg-background text-foreground antialiased;
     font-family: 'Inter', system-ui, sans-serif;
     overflow-x: hidden;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
   }
   #root {
     max-width: 100% !important;
@@ -47,9 +49,19 @@
   }
 }
 
+/* GPU compositing hint for animated elements */
+.will-change-[opacity] { will-change: opacity; }
+.will-change-[background-color] { will-change: background-color; }
+
+/* Skip rendering off-screen sections */
+.content-visibility-auto {
+  content-visibility: auto;
+  contain-intrinsic-size: auto 600px;
+}
+
 @keyframes float {
   0%, 100% { transform: translateY(0px); }
-  50% { transform: translateY(-18px); }
+  50% { transform: translateY(-12px); }
 }
 @keyframes gradient-shift {
   0% { background-position: 0% 50%; }
@@ -57,32 +69,38 @@
   100% { background-position: 0% 50%; }
 }
 @keyframes fade-up {
-  from { opacity: 0; transform: translateY(32px); }
+  from { opacity: 0; transform: translateY(20px); }
   to { opacity: 1; transform: translateY(0); }
 }
-@keyframes scale-in {
-  from { opacity: 0; transform: scale(0.85); }
-  to { opacity: 1; transform: scale(1); }
-}
-@keyframes shimmer-slide {
-  from { background-position: -200% 0; }
-  to { background-position: 200% 0; }
+@keyframes progress-fill {
+  from { width: 0; }
+  to { width: var(--target-width); }
 }
 
-.animate-float { animation: float 6s ease-in-out infinite; }
-.animate-gradient { background-size: 200% 200%; animation: gradient-shift 8s ease infinite; }
-.animate-fade-up { animation: fade-up 0.7s ease-out forwards; }
-.animate-scale-in { animation: scale-in 0.5s ease-out forwards; }
+.animate-float { animation: float 3s ease-in-out infinite; }
+.animate-gradient { background-size: 200% 200%; animation: gradient-shift 6s ease infinite; }
+.animate-fade-up { animation: fade-up 0.4s ease-out forwards; }
+.animate-progress {
+  animation: progress-fill 1s ease-out 0.3s forwards;
+  width: 0;
+}
 
+/* Glass cards — lighter blur for mobile performance */
 .glass-dark {
   background: rgba(255,255,255,0.04);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
   border: 1px solid rgba(255,255,255,0.08);
 }
 .glass-dark:hover {
-  background: rgba(255,255,255,0.07);
-  border-color: rgba(78,205,196,0.25);
+  background: rgba(255,255,255,0.06);
+  border-color: rgba(78,205,196,0.2);
+}
+
+/* Only apply backdrop-filter on larger screens where GPU can handle it */
+@media (hover: hover) and (pointer: fine) {
+  .glass-dark {
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+  }
 }
 
 .text-gradient {
@@ -111,7 +129,7 @@
 }
 
 .bg-dots {
-  background-image: radial-gradient(circle, rgba(255,255,255,0.06) 1px, transparent 1px);
+  background-image: radial-gradient(circle, rgba(255,255,255,0.05) 1px, transparent 1px);
   background-size: 28px 28px;
 }
 
