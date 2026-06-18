@@ -4,7 +4,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import {
   Target, Users, TrendingUp, Award, Bell, Smartphone,
   ChevronDown, Zap, Heart, Star, ArrowRight, Sparkles,
-  Menu, X, Trophy, BarChart3, Shield, Palette
+  Menu, X, Trophy, BarChart3, Shield, Palette, Instagram, Linkedin, Mail
 } from 'lucide-react';
 
 const PrivacyPolicy = lazy(() => import('./pages/PrivacyPolicy'));
@@ -563,6 +563,35 @@ const About = () => {
                 ))}
               </div>
             </div>
+
+            {/* Connect With Us */}
+            <div className="mt-6 pt-5 border-t border-white/8">
+              <p className="text-[10px] text-white/25 uppercase tracking-widest mb-3">Connect With Us</p>
+              <div className="flex items-center gap-2.5">
+                <a
+                  href="https://www.instagram.com/zavr.info?igsh=cWk4M2JqNTFicW9q"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="w-8 h-8 rounded-lg bg-white/5 border border-white/10 flex items-center justify-center text-white/50 hover:text-[#E4405F] hover:border-[#E4405F]/30 hover:bg-[#E4405F]/10 transition-all duration-200"
+                >
+                  <Instagram className="w-4 h-4" />
+                </a>
+                <a
+                  href="https://www.linkedin.com/company/zavr/"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="w-8 h-8 rounded-lg bg-white/5 border border-white/10 flex items-center justify-center text-white/50 hover:text-[#0A66C2] hover:border-[#0A66C2]/30 hover:bg-[#0A66C2]/10 transition-all duration-200"
+                >
+                  <Linkedin className="w-4 h-4" />
+                </a>
+                <a
+                  href="mailto:contact@zavr.info"
+                  className="w-8 h-8 rounded-lg bg-white/5 border border-white/10 flex items-center justify-center text-white/50 hover:text-[#4ECDC4] hover:border-[#4ECDC4]/30 hover:bg-[#4ECDC4]/10 transition-all duration-200"
+                >
+                  <Mail className="w-4 h-4" />
+                </a>
+              </div>
+            </div>
           </motion.div>
 
           <motion.div
@@ -691,7 +720,7 @@ const Ideas = () => (
 
 // ─── Footer ───────────────────────────────────────────────────────────────────
 const Footer = () => (
-  <footer className="bg-[#030709] border-t border-white/5 py-10 content-visibility-auto">
+  <footer className="bg-[#030709] border-t border-white/5 py-12 content-visibility-auto">
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
       <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-8">
         <div className="sm:col-span-2">
@@ -703,9 +732,37 @@ const Footer = () => (
             </div>
             <span className="text-base font-semibold text-white" style={{ fontFamily: 'Cormorant Garamond, serif' }}>Zavr</span>
           </div>
-          <p className="text-white/35 text-sm leading-relaxed max-w-xs">
+          <p className="text-white/35 text-sm leading-relaxed max-w-xs mb-4">
             Save smarter, together. Beautiful design meets powerful savings tools.
           </p>
+          {/* Social Links */}
+          <div className="flex items-center gap-3">
+            <a
+              href="https://www.instagram.com/zavr.info?igsh=cWk4M2JqNTFicW9q"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="w-9 h-9 rounded-lg bg-white/5 border border-white/10 flex items-center justify-center text-white/50 hover:text-[#E4405F] hover:border-[#E4405F]/30 hover:bg-[#E4405F]/10 transition-all duration-200"
+              aria-label="Follow us on Instagram"
+            >
+              <Instagram className="w-4 h-4" />
+            </a>
+            <a
+              href="https://www.linkedin.com/company/zavr/"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="w-9 h-9 rounded-lg bg-white/5 border border-white/10 flex items-center justify-center text-white/50 hover:text-[#0A66C2] hover:border-[#0A66C2]/30 hover:bg-[#0A66C2]/10 transition-all duration-200"
+              aria-label="Connect on LinkedIn"
+            >
+              <Linkedin className="w-4 h-4" />
+            </a>
+            <a
+              href="mailto:contact@zavr.info"
+              className="w-9 h-9 rounded-lg bg-white/5 border border-white/10 flex items-center justify-center text-white/50 hover:text-[#4ECDC4] hover:border-[#4ECDC4]/30 hover:bg-[#4ECDC4]/10 transition-all duration-200"
+              aria-label="Email us"
+            >
+              <Mail className="w-4 h-4" />
+            </a>
+          </div>
         </div>
         <div>
           <h4 className="text-[10px] font-semibold text-white/25 uppercase tracking-widest mb-3">Product</h4>
