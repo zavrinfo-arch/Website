@@ -1,3 +1,9 @@
-# Website
+# ZAVR Website
 
-[![Open in Bolt](https://bolt.new/static/open-in-bolt.svg)](https://bolt.new/~/sb1-pqb5cvau)
+A polished Vite, React, TypeScript, and Tailwind website for ZAVR.
+
+## Scripts
+
+- npm install
+- npm run dev
+- npm run build

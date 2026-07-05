@@ -114,7 +114,7 @@ const ShaderCanvas = () => {
     window.addEventListener('resize', resize);
     afId = requestAnimationFrame(render);
     return () => { window.removeEventListener('resize', resize); cancelAnimationFrame(afId); };
-  }, []);
+  }, [backgroundColor]);
 
   return <canvas ref={canvasRef} className="absolute inset-0 w-full h-full block z-0" />;
 };

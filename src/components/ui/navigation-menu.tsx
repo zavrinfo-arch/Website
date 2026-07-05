@@ -1,5 +1,7 @@
 import * as React from 'react';
 import { ChevronDownIcon } from '@radix-ui/react-icons';
+
+/* eslint-disable react-refresh/only-export-components */
 import * as NavigationMenuPrimitive from '@radix-ui/react-navigation-menu';
 import { cva } from 'class-variance-authority';
 

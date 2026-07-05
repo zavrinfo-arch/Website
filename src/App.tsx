@@ -160,7 +160,7 @@ const SplashScreen = ({ onDone }: { onDone: () => void }) => {
           transition={{ duration: 0.5, ease: 'easeOut' }}
           className="mt-3 text-white/35 text-[10px] sm:text-xs tracking-[0.35em] uppercase font-light"
         >
-          Save Smarter, Together
+          Your Smart Companion for Saving and Financial Freedom.
         </motion.p>
 
         {/* Animated line separator */}
@@ -733,7 +733,7 @@ const Footer = () => (
             <span className="text-base font-semibold text-white" style={{ fontFamily: 'Cormorant Garamond, serif' }}>Zavr</span>
           </div>
           <p className="text-white/35 text-sm leading-relaxed max-w-xs mb-4">
-            Save smarter, together. Beautiful design meets powerful savings tools.
+            Your Smart Companion for Saving and Financial Freedom.
           </p>
           {/* Social Links */}
           <div className="flex items-center gap-3">
@@ -790,7 +790,7 @@ const Footer = () => (
         </div>
       </div>
       <div className="mt-10 pt-6 border-t border-white/5 flex flex-col sm:flex-row items-center justify-between gap-3">
-        <p className="text-[10px] text-white/20">&copy; 2024 Zavr. All rights reserved.</p>
+        <p className="text-[10px] text-white/20">&copy; 2026 ZAVR. All Rights Reserved.</p>
         <p className="text-[10px] text-white/20 flex items-center gap-1">
           Made with <Heart className="w-2.5 h-2.5 fill-[#FF6B6B] text-[#FF6B6B]" /> for savers everywhere
         </p>

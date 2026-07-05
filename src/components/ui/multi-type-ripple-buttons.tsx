@@ -1,4 +1,4 @@
-import React, { ReactNode, useState, useMemo, MouseEvent, CSSProperties } from 'react';
+import React, { ReactNode, useState, useMemo, MouseEvent } from 'react';
 
 interface RippleState {
   key: number;
@@ -67,13 +67,18 @@ const RippleButton: React.FC<RippleButtonProps> = ({
       >
         <span className="relative z-[1] pointer-events-none">{children}</span>
         <div className="absolute inset-0 pointer-events-none z-[5]">
-          {jsRipples.map(ripple => (
-            <span
-              key={ripple.key}
-              className="absolute rounded-full animate-js-ripple-effect"
-              style={{ left: ripple.x, top: ripple.y, width: ripple.size, height: ripple.size, backgroundColor: ripple.color, ['--ripple-duration' as any]: `${rippleDuration}ms` } as CSSProperties}
-            />
-          ))}
+          {jsRipples.map(ripple => {
+            const rippleStyle: React.CSSProperties & Record<string, string | number> = {
+              left: ripple.x,
+              top: ripple.y,
+              width: ripple.size,
+              height: ripple.size,
+              backgroundColor: ripple.color,
+              ['--ripple-duration' as string]: `${rippleDuration}ms`,
+            };
+
+            return <span key={ripple.key} className="absolute rounded-full animate-js-ripple-effect" style={rippleStyle} />;
+          })}
         </div>
       </button>
     </>
