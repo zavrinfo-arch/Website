@@ -1,7 +1,7 @@
 import { motion } from 'framer-motion';
 import { ArrowLeft, Shield, Mail } from 'lucide-react';
 
-const LOGO_URL = '/image.png';
+const LOGO_URL = 'https://raw.githubusercontent.com/zavrinfo-arch/zavr-privacy-policy/main/zavr_logo.png';
 
 const sections = [
   {

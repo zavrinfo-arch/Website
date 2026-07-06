@@ -9,7 +9,7 @@ import {
 
 const PrivacyPolicy = lazy(() => import('./pages/PrivacyPolicy'));
 
-const LOGO_URL = '/image.png';
+const LOGO_URL = 'https://raw.githubusercontent.com/zavrinfo-arch/zavr-privacy-policy/main/zavr_logo.png';
 
 // GPU-friendly animation variants
 const fadeUp = {
