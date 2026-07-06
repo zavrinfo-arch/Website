@@ -219,6 +219,8 @@ const Navbar = () => {
   const [scrolled, setScrolled] = useState(false);
 
   useEffect(() => {
+    if (typeof window === 'undefined') return;
+
     let ticking = false;
     const fn = () => {
       if (!ticking) {
@@ -805,9 +807,15 @@ export default function App() {
   const [page, setPage] = useState<'home' | 'privacy'>('home');
 
   useEffect(() => {
+    if (typeof window === 'undefined') return;
+
     const handler = (e: Event) => {
       const detail = (e as CustomEvent).detail;
-      setPage(detail);
+      if (detail === 'privacy') {
+        setPage('privacy');
+      } else {
+        setPage('home');
+      }
       window.scrollTo({ top: 0, behavior: 'smooth' });
     };
     window.addEventListener('navigate', handler);

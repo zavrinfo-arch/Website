@@ -16,6 +16,8 @@ const ShaderCanvas = () => {
   const [backgroundColor, setBackgroundColor] = useState([0, 0, 0]);
 
   useEffect(() => {
+    if (typeof document === 'undefined') return;
+
     const root = document.documentElement;
     const updateColor = () => {
       const isDark = root.classList.contains('dark');
@@ -38,6 +40,8 @@ const ShaderCanvas = () => {
   }, [backgroundColor]);
 
   useEffect(() => {
+    if (typeof window === 'undefined') return;
+
     const canvas = canvasRef.current;
     if (!canvas) return;
     const gl = canvas.getContext('webgl');
