@@ -47,13 +47,21 @@
     margin: 0 !important;
     text-align: left !important;
   }
+  ::selection {
+    background: rgba(78, 205, 196, 0.35);
+    color: white;
+  }
+  a, button {
+    @apply outline-none;
+  }
+  a:focus-visible, button:focus-visible {
+    @apply ring-2 ring-[#4ECDC4] ring-offset-2 ring-offset-[#050a14];
+  }
 }
 
-/* GPU compositing hint for animated elements */
 .will-change-[opacity] { will-change: opacity; }
 .will-change-[background-color] { will-change: background-color; }
 
-/* Skip rendering off-screen sections */
 .content-visibility-auto {
   content-visibility: auto;
   contain-intrinsic-size: auto 600px;
@@ -90,7 +98,6 @@
   width: 0;
 }
 
-/* Glass cards — lighter blur for mobile performance */
 .glass-dark {
   background: rgba(255,255,255,0.04);
   border: 1px solid rgba(255,255,255,0.08);
@@ -100,11 +107,22 @@
   border-color: rgba(78,205,196,0.2);
 }
 
-/* Only apply backdrop-filter on larger screens where GPU can handle it */
 @media (hover: hover) and (pointer: fine) {
   .glass-dark {
     backdrop-filter: blur(12px);
     -webkit-backdrop-filter: blur(12px);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html:focus-within {
+    scroll-behavior: auto;
+  }
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
   }
 }
 

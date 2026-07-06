@@ -9,7 +9,7 @@ import {
 
 const PrivacyPolicy = lazy(() => import('./pages/PrivacyPolicy'));
 
-const LOGO_URL = 'https://raw.githubusercontent.com/zavrinfo-arch/zavr-privacy-policy/main/zavr_logo.png';
+const LOGO_URL = '/image.png';
 
 // GPU-friendly animation variants
 const fadeUp = {
@@ -281,7 +281,13 @@ const Navbar = () => {
           </a>
         </div>
 
-        <button onClick={() => setOpen(!open)} className="md:hidden text-white/70 hover:text-white p-2 rounded-lg active:bg-white/5">
+        <button
+          onClick={() => setOpen(!open)}
+          className="md:hidden text-white/70 hover:text-white p-2 rounded-lg active:bg-white/5"
+          aria-label="Toggle navigation menu"
+          aria-expanded={open}
+          aria-controls="mobile-nav"
+        >
           {open ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
         </button>
       </div>
@@ -289,6 +295,7 @@ const Navbar = () => {
       <AnimatePresence>
         {open && (
           <motion.div
+            id="mobile-nav"
             initial={{ height: 0, opacity: 0 }}
             animate={{ height: 'auto', opacity: 1 }}
             exit={{ height: 0, opacity: 0 }}
