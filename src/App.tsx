@@ -150,8 +150,8 @@ function LandingPage() {
   const words = ['Future', 'of', 'Smart', 'Saving'];
   const socials: SocialLink[] = [
     { label: 'GitHub', href: 'https://github.com', icon: Github },
-    { label: 'LinkedIn', href: 'https://www.linkedin.com', icon: Linkedin },
-    { label: 'Instagram', href: 'https://www.instagram.com', icon: Instagram },
+    { label: 'LinkedIn', href: 'https://www.linkedin.com/company/zavr/', icon: Linkedin },
+    { label: 'Instagram', href: 'https://www.instagram.com/zavr.info?igsh=cWk4M2JqNTFicW9q', icon: Instagram },
     { label: 'X', href: 'https://twitter.com', icon: Twitter },
   ];
 
